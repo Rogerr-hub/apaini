@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "../java.lang/object.c" //implement IOexception extend exception (masukin di typdef)
 
 /**
  * A C structure to represent an I/O exception.

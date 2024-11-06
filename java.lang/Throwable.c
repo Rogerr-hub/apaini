@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "Object.c" //implement throwable extend object (masukin di typdef)
 
 /**
  * Structure representing a Throwable in C.

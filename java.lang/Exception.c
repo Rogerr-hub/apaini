@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include "Throwable.c" //implement exception extend throwable (masukin di typdef)
 
 /**
  * Structure representing a generic Exception in C.
