@@ -44,16 +44,25 @@ void printIOException(IOException *exception) {
         printf("IOException: %s\n", exception->message);
     }
 }
-/*
-int main() {
-    IOException ioException;
-    initIOException(&ioException);  // Initialize with default message
-    printIOException(&ioException);
 
-    IOException customIOException;
-    initIOExceptionWithMessage(&customIOException, "Custom I/O error message");
-    printIOException(&customIOException);
+// int main() {
+//     IOException ioException;
+//     initIOException(&ioException);  // Initialize with default message
+//     printIOException(&ioException);
 
-    return 0;
-}
-*/
+//     IOException customIOException;
+//     initIOExceptionWithMessage(&customIOException, "Custom I/O error message");
+//     printIOException(&customIOException);
+
+//     Object o1;
+//     Object o2;
+//     o2.equals = equals;
+//     if (o2.equals(&o1, &o1)) {
+//         printf("Objects are equal.\n");
+//     } else {
+//         printf("Objects are not equal.\n");
+//     }
+
+//     return 0;
+// }
+
