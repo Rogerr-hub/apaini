@@ -13,6 +13,7 @@
  */
 
 typedef struct IOException {
+    Exception Exception;
     char message[256];  // Error message describing the I/O issue
 } IOException;
 

@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include "Object.c" //implement throwable extend object (masukin di typdef)
 
+#define equals 
 /**
  * Structure representing a Throwable in C.
  */
 typedef struct Throwable {
+    Object Object;
     char message[100];  // To store the exception message
 } Throwable;
 

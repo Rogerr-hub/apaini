@@ -7,6 +7,7 @@
  */
 typedef struct Object {
     // Fields can be added here to represent data
+    bool (*equals) (Object *obj1, Object *obj2);
 } Object;
 
 /**

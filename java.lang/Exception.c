@@ -7,6 +7,7 @@
  * This is similar to Java's Exception class.
  */
 typedef struct Exception {
+    Throwable Throwable;
     char message[100];  // To store the exception message
 } Exception;
 
