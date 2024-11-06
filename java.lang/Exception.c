@@ -6,9 +6,15 @@
  * Structure representing a generic Exception in C.
  * This is similar to Java's Exception class.
  */
-typedef struct Exception {
+typedef struct Exception Exception;
+struct Exception {
+    Throwable Throwable;
+    Exception (*createException) ();
+    Exception (*createExceptionWithMessage) (const char *msg);
+    void (*printException) (Exception ex);
+
     char message[100];  // To store the exception message
-} Exception;
+};
 
 /**
  * Constructs an Exception instance with a default message.
