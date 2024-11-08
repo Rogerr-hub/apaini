@@ -11,11 +11,15 @@
  * In C, we typically handle errors using return codes instead of exceptions.
  * This structure can hold error information, similar to Java's IOException.
  */
-
-typedef struct IOException {
+typedef struct IOException IOException;
+struct IOException {
     Exception Exception;
+    void (*initIOException) (IOException *exception);
+    void (*initIOExceptionWithMessage) (IOException *exception, const char *customMessage);
+    void (*printIOException) (IOException *exception);
+
     char message[256];  // Error message describing the I/O issue
-} IOException;
+};
 
 /**
  * Initializes an IOException with a default message.
