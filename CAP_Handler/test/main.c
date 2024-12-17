@@ -22,7 +22,13 @@
 //     translate_bytecode(buff,length);
 
 // }
-int main(){
+int main(int argc, char* argv[]){
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <cap_file>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    const char *filename = argv[1];
     uint8_t data_header[256];
     uint8_t data_drt[256];
     uint8_t data_aplt[256];
@@ -31,9 +37,9 @@ int main(){
     size_t length_drt = 0;
     size_t length_aplt = 0;
     
-    read_isi_partisi("jcard.cap", "Header.cap", data_header, &length_header);
-    read_isi_partisi("jcard.cap", "Directory.cap", data_drt, &length_drt);
-    read_isi_partisi("jcard.cap", "Applet.cap", data_aplt, &length_aplt);
+    read_isi_partisi(filename, "Header.cap", data_header, &length_header);
+    read_isi_partisi(filename, "Directory.cap", data_drt, &length_drt);
+    read_isi_partisi(filename, "Applet.cap", data_aplt, &length_aplt);
 
     applet aplt;
     directory drt;
