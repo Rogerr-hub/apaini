@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <string.h>
+
 //#include "utils.h"
 
 
@@ -98,7 +99,7 @@ typedef struct applet
 typedef struct import
 {
     uint8_t tag;
-    uint16_t size_t;
+    uint16_t size;
     uint8_t count;
     package_info packages[5];
 } import;
@@ -205,7 +206,7 @@ typedef struct constantpool
     uint8_t tag;
     uint16_t size;
     uint16_t count;
-    cp_info constant_pool[5];
+    cp_info constant_pool[100];
 } constantpool ;
 
 //======Constan_Pool=============//
@@ -243,10 +244,10 @@ typedef struct class
 {
     uint8_t tag;
     uint16_t size;
-    uint16_t signature_pool_length;
-    type_descriptor signature_pool[50];
+    uint16_t signature_pool_length; //versi 3.1
+    type_descriptor signature_pool[50]; //versi 3.1
     interface_info interfaces[50];
-    class_info_compact classes[50];
+    class_info_compact classes[50]; //versi 3.1
 } class ;
 
 //======Class====================//
@@ -329,9 +330,9 @@ typedef struct RefLocation
     uint8_t tag;
     uint16_t size;
     uint16_t byte_index_count;
-    uint8_t offsets_to_byte_indices[10];
+    uint8_t offsets_to_byte_indices[50];
     uint16_t byte2_index_count;
-    uint8_t offsets_to_byte2_indices[10];
+    uint8_t offsets_to_byte2_indices[50];
 } RefLocation;
 
 //=========ReferenceLocation=======//
@@ -515,36 +516,211 @@ void directory_structure_versi_2_1(uint8_t *buffer, size_t length, directory *dr
     drt->custom_count = buffer[offset++];
 }
 
+void import_structure_versi_2_1(uint8_t *buffer, size_t length, import *imp) {
+    size_t offset = 0; // Tracks the current buffer position
+
+    // Ensure minimum buffer size
+    if (length < 4) return;
+
+    // Extract 'tag' (1 byte)
+    imp->tag = buffer[offset++];
+
+    // Extract 'size' (2 bytes, big-endian)
+    imp->size = (buffer[offset] << 8) | buffer[offset + 1];
+    offset += 2;
+
+    // Extract 'count' (1 byte)
+    imp->count = buffer[offset++];
+
+    // Limit 'count' to 5 to avoid buffer overflows
+    if (imp->count > 5) imp->count = 5;
+
+    // Extract package information for each package
+    for (int i = 0; i < imp->count; i++) {
+        // Extract 'minor' and 'major' (1 byte each)
+        imp->packages[i].minor = buffer[offset++];
+        imp->packages[i].major = buffer[offset++];
+
+        // Extract 'AID_length' (1 byte)
+        imp->packages[i].AID_length = buffer[offset++];
+
+        // Limit 'AID_length' to 10 to avoid overflow
+        if (imp->packages[i].AID_length > 10) imp->packages[i].AID_length = 10;
+
+        // Extract AID array
+        for (int j = 0; j < imp->packages[i].AID_length; j++) {
+            imp->packages[i].AID[j] = buffer[offset++];
+        }
+    }
+}
+
+
+void cp_structure_versi_2_1(uint8_t* buffer, size_t length, constantpool* cp) {
+    size_t offset = 0; // Tracks the current position in the buffer
+
+    // Ensure buffer has the minimum required size
+    if (length < 5) return;
+
+    // Extract 'tag' (1 byte)
+    cp->tag = buffer[offset++];
+
+    // Extract 'size' (2 bytes, big-endian)
+    cp->size = (buffer[offset] << 8) | buffer[offset + 1];
+    offset += 2;
+
+    // Extract 'count' (2 bytes, big-endian)
+    cp->count = (buffer[offset] << 8) | buffer[offset + 1];
+    offset += 2;
+
+    // Limit 'count' to 100 to prevent buffer overflow
+    if (cp->count > 100) cp->count = 100;
+
+    // Extract each constant pool entry
+    for (int i = 0; i < cp->count; i++) {
+        // Extract 'tag' (1 byte) for each constant pool entry
+        cp->constant_pool[i].tag = buffer[offset++];
+
+        // Extract 'info' (3 bytes)
+        for (int j = 0; j < 3; j++) {
+            cp->constant_pool[i].info[j] = buffer[offset++];
+        }
+    }
+}
+
+void sf_structure_versi_2_1(uint8_t* buffer, size_t length, static_field* sf) {
+    size_t offset = 0;
+
+    // Ensure buffer has enough data to parse the required fields
+    if (length < 11) return;
+
+    // Extract 'tag' (1 byte)
+    sf->tag = buffer[offset++];
+
+    // Extract 'size' (2 bytes, big-endian)
+    sf->size = (buffer[offset] << 8) | buffer[offset + 1];
+    offset += 2;
+
+    // Extract 'image_size' (2 bytes, big-endian)
+    sf->image_size = (buffer[offset] << 8) | buffer[offset + 1];
+    offset += 2;
+
+    // Extract 'reference_count' (2 bytes, big-endian)
+    sf->reference_count = (buffer[offset] << 8) | buffer[offset + 1];
+    offset += 2;
+
+    // Extract 'array_init_count' (2 bytes, big-endian)
+    sf->array_init_count = (buffer[offset] << 8) | buffer[offset + 1];
+    offset += 2;
+
+    // Limit array_init_count to 10 to avoid overflow
+    if (sf->array_init_count > 10) sf->array_init_count = 10;
+
+    // Extract 'array_init' entries
+    for (int i = 0; i < sf->array_init_count; i++) {
+        // Extract 'type' (1 byte)
+        sf->array_init[i].type = buffer[offset++];
+
+        // Extract 'count' (2 bytes, big-endian)
+        sf->array_init[i].count = (buffer[offset] << 8) | buffer[offset + 1];
+        offset += 2;
+
+        // Extract 'values' (up to 10 bytes)
+        for (int j = 0; j < 10; j++) {
+            sf->array_init[i].values[j] = buffer[offset++];
+        }
+    }
+
+    // Extract 'default_value_count' (2 bytes, big-endian)
+    sf->default_value_count = (buffer[offset] << 8) | buffer[offset + 1];
+    offset += 2;
+
+    // Extract 'non_default_value_count' (2 bytes, big-endian)
+    if(sf->non_default_value_count!=0){
+        sf->non_default_value_count = (buffer[offset] << 8) | buffer[offset + 1];
+        offset += 2;
+
+        // Extract 'non_default_values' (up to 10 bytes)
+        for (int i = 0; i < 10; i++) {
+            sf->non_default_values[i] = buffer[offset++];
+        }
+    }
+    
+}
+
+void reflo_structure_versi_2_1(uint8_t* buffer, size_t length, RefLocation* rf) {
+    size_t offset = 0;
+
+    // Ensure buffer is large enough to parse initial fields
+    if (length < 7) return;
+
+    // Extract 'tag' (1 byte)
+    rf->tag = buffer[offset++];
+
+    // Extract 'size' (2 bytes, big-endian)
+    rf->size = (buffer[offset] << 8) | buffer[offset + 1];
+    offset += 2;
+
+    // Extract 'byte_index_count' (2 bytes, big-endian)
+    rf->byte_index_count = (buffer[offset] << 8) | buffer[offset + 1];
+    offset += 2;
+
+    // Extract 'offsets_to_byte_indices' (up to 10 bytes)
+    for (int i = 0; i < 50; i++) {
+        if (i < rf->byte_index_count) {
+            rf->offsets_to_byte_indices[i] = buffer[offset++];
+        } else {
+            rf->offsets_to_byte_indices[i] = 0;  // Fill unused slots with zero
+        }
+    }
+
+    // Extract 'byte2_index_count' (2 bytes, big-endian)
+    rf->byte2_index_count = (buffer[offset] << 8) | buffer[offset + 1];
+    offset += 2;
+
+    // Extract 'offsets_to_byte2_indices' (up to 10 bytes)
+    for (int i = 0; i < 50; i++) {
+        if (i < rf->byte2_index_count) {
+            rf->offsets_to_byte2_indices[i] = buffer[offset++];
+        } else {
+            rf->offsets_to_byte2_indices[i] = 0;  // Fill unused slots with zero
+        }
+    }
+}
 
 
 // int main(){
 //     uint8_t data[256];
 //     size_t length = 0;
-//     read_isi_partisi("jcard.cap", "Header.cap", data, &length);
-//     print_array(data, length);
 //     applet app;
 //     directory drt;
 //     header hdr;
-//     //directory_structure_versi_2_1(data, length, &drt);
-//     header_structure(data, length, &hdr);
+//     import imp;
+//     constantpool cp;
+//     static_field sf;
+//     RefLocation rf;
 
-
-
-//     printf("Tag: %02x\n", hdr.tag);
-//     printf("Size: %04x\n", hdr.size);
-//     printf("Magic: %08x\n", hdr.magic);
-//     printf("Minor: %02x, Major: %02x, Flags: %02x\n", hdr.minor, hdr.major, hdr.flags);
-
-//     printf("Package Info:\n");
-//     printf("  Minor: %02x, Major: %02x\n", hdr.package.minor, hdr.package.major);
-//     printf("  AID Length: %02x\n", hdr.package.AID_length);
-//     printf("  AID: ");
-//     for (int i = 0; i < hdr.package.AID_length; i++) {
-//         printf("%02x ", hdr.package.AID[i]);
+//     read_isi_partisi("jcard.cap", "RefLocation.cap", data, &length);
+//     //cp_structure_versi_2_1(data, length, &cp);
+//     reflo_structure_versi_2_1(data, length, &rf);
+//     // Print parsed data
+//     printf("Tag: %02x\n", rf.tag);
+//     printf("Size: %04x\n", rf.size);
+//     printf("Byte Index Count: %04x\n", rf.byte_index_count);
+//     printf("Offsets to Byte Indices: ");
+//     for (int i = 0; i < rf.byte_index_count; i++) {
+//         printf("%02x ", rf.offsets_to_byte_indices[i]);
 //     }
 //     printf("\n");
 
+//     printf("Byte2 Index Count: %04x\n", rf.byte2_index_count);
+//     printf("Offsets to Byte2 Indices: ");
+//     for (int i = 0; i < rf.byte2_index_count; i++) {
+//         printf("%02x ", rf.offsets_to_byte2_indices[i]);
+//     }
 //     printf("\n");
+
+
+//     return 0;
 
    
 // }
